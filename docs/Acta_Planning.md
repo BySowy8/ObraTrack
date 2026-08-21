@@ -1,7 +1,7 @@
 # Acta de Sprint Planning - Sprint 1
 
 - **Fecha:** 20 de agosto de 2026
-- **Hora:** 20:00 - 21:30
+- **Hora:** 19:13 - 19:32
 - **Medio:** Reunión sincrónica vía videollamada
 - **Participantes:** Jean Michael Valega Amaya, Cristhian Felipe Hernandez Farias, Ángel Bayona.
 
