@@ -1,62 +1,84 @@
 import pandas as pd
 from IPython.display import display, HTML
+from supabase import create_client
 
 def obtener_datos_bitacora(supabase_client):
-    """Consulta la tabla bitacora y retorna un DataFrame."""
+    """
+    Obtiene todos los registros de la tabla 'bitacora' desde Supabase.
+    """
     try:
-        respuesta = supabase_client.table("bitacora").select("*").order("fecha", desc=True).execute()
-        return pd.DataFrame(respuesta.data)
+        response = supabase_client.table("bitacora").select("*").execute()
+        data = response.data
+        if not data:
+            return pd.DataFrame()
+        return pd.DataFrame(data)
     except Exception as e:
-        print("❌ Error al consultar Supabase:", e)
+        print(f"Error al obtener los datos: {e}")
         return pd.DataFrame()
 
 def renderizar_historial_html(df):
-    """Genera la interfaz visual responsiva con colores."""
-    if df is None or df.empty:
-        print("⚠️ No hay registros guardados en la bitácora todavía.")
+    """
+    Renderiza el historial con un diseño minimalista, limpio y tipo software real.
+    """
+    if df.empty:
+        display(HTML("""
+            <div style="font-family: monospace; padding: 15px; border: 1px solid #ddd; background: #fafafa; color: #555; max-width: 600px;">
+                [Aviso] No hay registros en la bitácora todavía.
+            </div>
+        """))
         return
 
-    html_code = """
+    # Estilo minimalista, plano, sin sombras de IA y tipografía neutra
+    estilos = """
     <style>
-        .contenedor-bitacora { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; }
-        .card-avance { border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
-        .sin-imprevisto { background-color: #f0fdf4; border-left: 6px solid #16a34a; }
-        .con-imprevisto { background-color: #fef2f2; border-left: 6px solid #dc2626; }
-        .header-card { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .fecha { font-weight: bold; color: #334155; }
-        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; }
-        .badge-success { background-color: #dcfce7; color: #15803d; }
-        .badge-danger { background-color: #fee2e2; color: #b91c1c; }
-        .texto-imprevisto { color: #991b1b; background-color: #fff1f1; padding: 8px 12px; border-radius: 6px; font-size: 0.9em; margin-top: 8px; border: 1px solid #fecaca; }
+        .obratrack-container {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 20px 0;
+            max-width: 900px;
+        }
+        .obratrack-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 6px;
+        }
+        .obratrack-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            color: #333;
+            background: #ffffff;
+            border: 1px solid #e1e4e8;
+        }
+        .obratrack-table th {
+            background-color: #f6f8fa;
+            color: #24292e;
+            font-weight: 600;
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        .obratrack-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .obratrack-table tr:hover {
+            background-color: #f8f9fa;
+        }
     </style>
-    <div class="contenedor-bitacora">
-        <h2 style="color: #0f172a; text-align: center; margin-bottom: 20px;">📋 Historial de Bitácora de Obra</h2>
     """
 
-    for _, fila in df.iterrows():
-        imprevisto_txt = str(fila.get('imprevisto', '')).strip()
-        tiene_imprevisto = bool(imprevisto_txt and imprevisto_txt.lower() not in ['none', 'nan', 'null', ''])
-
-        clase_card = "con-imprevisto" if tiene_imprevisto else "sin-imprevisto"
-        badge_html = '<span class="badge badge-danger">🚨 Con Imprevisto</span>' if tiene_imprevisto else '<span class="badge badge-success">✅ Día Normal</span>'
-
-        html_code += f"""
-        <div class="card-avance {clase_card}">
-            <div class="header-card">
-                <span class="fecha">📅 Fecha: {fila.get('fecha', 'N/A')}</span>
-                {badge_html}
-            </div>
-            <div><strong>Avance del día:</strong> {fila.get('descripcion_avance', 'Sin información')}</div>
-        """
-
-        if tiene_imprevisto:
-            html_code += f"""
-            <div class="texto-imprevisto">
-                <strong>⚠️ Detalle del Imprevisto:</strong> {imprevisto_txt}
-            </div>
-            """
-
-        html_code += "</div>"
-
-    html_code += "</div>"
-    display(HTML(html_code))
+    # Convertimos el DataFrame a HTML limpio
+    tabla_html = df.to_html(classes='obratrack-table', index=False, border=0)
+    
+    html_final = f"""
+    {estilos}
+    <div class="obratrack-container">
+        <div class="obratrack-title">Historial de ObraTrack (Bitácora)</div>
+        {tabla_html}
+    </div>
+    """
+    
+    display(HTML(html_final))
