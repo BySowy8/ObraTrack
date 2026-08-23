@@ -1,6 +1,5 @@
 import pandas as pd
 from IPython.display import display, HTML
-from supabase import create_client
 
 def obtener_datos_bitacora(supabase_client):
     """
@@ -18,17 +17,17 @@ def obtener_datos_bitacora(supabase_client):
 
 def renderizar_historial_html(df):
     """
-    Renderiza el historial con un diseño minimalista, limpio y tipo software real.
+    Renderiza el historial con diseño minimalista y diferencia visual para imprevistos.
     """
     if df.empty:
         display(HTML("""
-            <div style="font-family: monospace; padding: 15px; border: 1px solid #ddd; background: #fafafa; color: #555; max-width: 600px;">
+            <div style="font-family: -apple-system, sans-serif; padding: 15px; border: 1px solid #e1e4e8; background: #f6f8fa; color: #586069; font-size: 13px; max-width: 900px;">
                 [Aviso] No hay registros en la bitácora todavía.
             </div>
         """))
         return
 
-    # Estilo minimalista, plano, sin sombras de IA y tipografía neutra
+    # Estilos CSS limpios y adaptados para imprevistos
     estilos = """
     <style>
         .obratrack-container {
@@ -37,9 +36,9 @@ def renderizar_historial_html(df):
             max-width: 900px;
         }
         .obratrack-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            color: #222;
+            color: #24292e;
             margin-bottom: 8px;
             border-bottom: 1px solid #eaeaea;
             padding-bottom: 6px;
@@ -48,7 +47,7 @@ def renderizar_historial_html(df):
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
-            color: #333;
+            color: #24292e;
             background: #ffffff;
             border: 1px solid #e1e4e8;
         }
@@ -63,21 +62,72 @@ def renderizar_historial_html(df):
         .obratrack-table td {
             padding: 8px 12px;
             border-bottom: 1px solid #eaeaea;
+            vertical-align: top;
         }
         .obratrack-table tr:hover {
             background-color: #f8f9fa;
         }
+        /* Estilo sutil para filas con imprevistos */
+        .fila-imprevisto {
+            background-color: #fffdfd;
+        }
+        .badge-imprevisto {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #d73a49;
+            background-color: #ffeef0;
+            border: 1px solid rgba(27,31,35,0.15);
+            border-radius: 3px;
+            margin-top: 4px;
+        }
+        .badge-normal {
+            color: #28a745;
+            font-size: 12px;
+        }
     </style>
     """
 
-    # Convertimos el DataFrame a HTML limpio
-    tabla_html = df.to_html(classes='obratrack-table', index=False, border=0)
-    
+    # Construimos las filas de la tabla manualmente para inyectar la lógica de imprevistos
+    filas_html = ""
+    for _, row in df.iterrows():
+        fecha = row.get('fecha', 'Sin fecha')
+        avance = row.get('descripcion_avance', 'Sin descripción')
+        imprevisto = row.get('imprevisto', None)
+
+        if imprevisto and str(imprevisto).strip() and str(imprevisto).lower() != 'none':
+            # Si hay imprevisto
+            estado_html = f"<span class='badge-imprevisto'> IMPREVISTO: {imprevisto}</span>"
+            clase_fila = "fila-imprevisto"
+        else:
+            estado_html = "<span class='badge-normal'>✓ Normal</span>"
+            clase_fila = ""
+
+        filas_html += f"""
+        <tr class="{clase_fila}">
+            <td style="white-space: nowrap; width: 110px;">{fecha}</td>
+            <td>{avance}</td>
+            <td style="width: 250px;">{estado_html}</td>
+        </tr>
+        """
+
     html_final = f"""
     {estilos}
     <div class="obratrack-container">
-        <div class="obratrack-title">Historial de ObraTrack (Bitácora)</div>
-        {tabla_html}
+        <div class="obratrack-title">Historial de Avances (Bitácora)</div>
+        <table class="obratrack-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Avance del Día</th>
+                    <th>Estado / Observación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {filas_html}
+            </tbody>
+        </table>
     </div>
     """
     
